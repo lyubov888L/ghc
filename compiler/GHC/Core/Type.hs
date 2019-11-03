@@ -120,10 +120,10 @@ module GHC.Core.Type (
 
         -- *** Levity and boxity
         isLiftedType_maybe,
-        isLiftedTypeKind, isUnliftedTypeKind, pickyIsLiftedTypeKind,
-        isLiftedRuntimeRep, isUnliftedRuntimeRep,
+        isLiftedTypeKind, isUnliftedTypeKind, isGcPtrTypeKind, pickyIsLiftedTypeKind,
+        isLiftedRuntimeRep, isUnliftedRuntimeRep, isGcPtrRuntimeRep,
         isLiftedLevity, isUnliftedLevity,
-        isUnliftedType, mightBeUnliftedType, isUnboxedTupleType, isUnboxedSumType,
+        isUnliftedType, isGcPtrType, mightBeUnliftedType, isUnboxedTupleType, isUnboxedSumType,
         isAlgType, isDataFamilyAppType,
         isPrimitiveType, isStrictType,
         isRuntimeRepTy, isRuntimeRepVar, isRuntimeRepKindedTy,
@@ -145,10 +145,10 @@ module GHC.Core.Type (
         -- ** Finding the kind of a type
         typeKind, tcTypeKind, isTypeLevPoly, resultIsLevPoly,
         tcIsLiftedTypeKind, tcIsConstraintKind, tcReturnsConstraintKind,
-        tcIsRuntimeTypeKind,
+        tcIsUnliftedTypeKind, tcIsRuntimeTypeKind,
 
         -- ** Common Kind
-        liftedTypeKind,
+        liftedTypeKind, unliftedTypeKind,
 
         -- * Type free variables
         tyCoFVsOfType, tyCoFVsBndr, tyCoFVsVarBndr, tyCoFVsVarBndrs,
@@ -259,7 +259,7 @@ import GHC.Builtin.Types.Prim
 import {-# SOURCE #-} GHC.Builtin.Types
                                  ( charTy, naturalTy, listTyCon
                                  , typeSymbolKind, liftedTypeKind
-                                 , constraintKind
+                                 , unliftedTypeKind, constraintKind
                                  , unrestrictedFunTyCon
                                  , manyDataConTy, oneDataConTy )
 import GHC.Types.Name( Name )
@@ -689,6 +689,26 @@ isUnliftedRuntimeRep rep
         -- In the RuntimeRep data type, only LiftedRep is lifted
         -- But be careful of type families (F tys) :: RuntimeRep
   | otherwise {- Variables, applications -}
+  = False
+
+-- | Returns True if the kind classifies types which are allocated on the
+-- Haskell heap and False otherwise. Note that this returns False for
+-- levity-polymorphic kinds, which may be specialized to a kind that classifies
+-- AddrRep or even unboxed kinds.
+isGcPtrTypeKind :: Kind -> Bool
+isGcPtrTypeKind kind
+  = case kindRep_maybe kind of
+      Just rep -> isGcPtrRuntimeRep rep
+      Nothing  -> False
+
+isGcPtrRuntimeRep :: Type -> Bool
+-- True <=> LiftedRep or UnliftedRep, which are represented by pointers to the
+--          Haskell heap
+isGcPtrRuntimeRep rep
+  | Just rep' <- coreView rep = isGcPtrRuntimeRep rep'
+  | TyConApp rr_tc _ <- rep
+  = rr_tc `hasKey` liftedRepDataConKey || rr_tc `hasKey` unliftedRepDataConKey
+  | otherwise
   = False
 
 -- | Is this the type 'RuntimeRep'?
@@ -2108,6 +2128,13 @@ mightBeUnliftedType ty
       Just is_lifted -> not is_lifted
       Nothing -> True
 
+-- | See "Type#type_classification" for what an unlifted type is.
+-- Panics on levity polymorphic types; See 'mightBeUnliftedType' for
+-- a more approximate predicate that behaves better in the presence of
+-- levity polymorphism.
+isGcPtrType :: Type -> Bool
+isGcPtrType ty = isGcPtrRuntimeRep (getRuntimeRep ty)
+
 -- | Is this a type of kind RuntimeRep? (e.g. LiftedRep)
 isRuntimeRepKindedTy :: Type -> Bool
 isRuntimeRepKindedTy = isRuntimeRepTy . typeKind
@@ -2698,6 +2725,15 @@ tcIsLiftedTypeKind ty
   | Just (tc, [arg]) <- tcSplitTyConApp_maybe ty    -- Note: tcSplit here
   , tc `hasKey` tYPETyConKey
   = isLiftedRuntimeRep arg
+  | otherwise
+  = False
+
+-- | Is this kind equivalent to @TYPE 'UnliftedRep@?
+tcIsUnliftedTypeKind :: Kind -> Bool
+tcIsUnliftedTypeKind ty
+  | Just (tc, [arg]) <- tcSplitTyConApp_maybe ty    -- Note: tcSplit here
+  , tc `hasKey` tYPETyConKey
+  = isUnliftedRuntimeRep arg
   | otherwise
   = False
 

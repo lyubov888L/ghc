@@ -35,7 +35,7 @@ import GHC.StgToCmm.Closure
 import GHC.Cmm.CLabel
 
 import GHC.Cmm.BlockId
-import GHC.Cmm.Expr
+import GHC.Cmm.Expr hiding (isGcPtrType) -- we want the one from Type
 import GHC.Cmm.Utils
 import GHC.Types.Id
 import GHC.Cmm.Graph
@@ -136,12 +136,15 @@ getCgIdInfo id
           let name = idName id
         ; if isExternalName name then
               let ext_lbl
-                      | isUnliftedType (idType id) =
+                      | isGcPtrType (idType id)
+                      = mkClosureLabel name $ idCafInfo id
+                      | isUnliftedType (idType id)
                           -- An unlifted external Id must refer to a top-level
                           -- string literal. See Note [Bytes label] in "GHC.Cmm.CLabel".
-                          ASSERT( idType id `eqType` addrPrimTy )
-                          mkBytesLabel name
-                      | otherwise = mkClosureLabel name $ idCafInfo id
+                      = ASSERT( idType id `eqType` addrPrimTy )
+                        mkBytesLabel name
+                      | otherwise
+                      = pprPanic "GHC.StgToCmm.Env: label not found" (ppr id <+> dcolon <+> ppr (idType id))
               in return $
                   litIdInfo platform id (mkLFImported id) (CmmLabel ext_lbl)
           else

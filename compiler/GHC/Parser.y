@@ -603,14 +603,15 @@ are the most common patterns, rewritten as regular expressions for clarity:
  'javascript'   { L _ ITjavascriptcallconv }
  'proc'         { L _ ITproc }          -- for arrow notation extension
  'rec'          { L _ ITrec }           -- for arrow notation extension
- 'group'    { L _ ITgroup }     -- for list transform extension
- 'by'       { L _ ITby }        -- for list transform extension
- 'using'    { L _ ITusing }     -- for list transform extension
+ 'group'        { L _ ITgroup }     -- for list transform extension
+ 'by'           { L _ ITby }        -- for list transform extension
+ 'using'        { L _ ITusing }     -- for list transform extension
  'pattern'      { L _ ITpattern } -- for pattern synonyms
  'static'       { L _ ITstatic }  -- for static pointers extension
  'stock'        { L _ ITstock }    -- for DerivingStrategies extension
  'anyclass'     { L _ ITanyclass } -- for DerivingStrategies extension
  'via'          { L _ ITvia }      -- for DerivingStrategies extension
+ 'unlifted'     { L _ ITunlifted }
 
  'unit'         { L _ ITunit }
  'signature'    { L _ ITsignature }
@@ -1223,24 +1224,24 @@ ty_decl :: { LTyClDecl GhcPs }
                            ++ (fst $ unLoc $5) ++ (fst $ unLoc $6)) }
 
           -- ordinary data type or newtype declaration
-        | data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings
-                {% amms (mkTyData (comb4 $1 $3 $4 $5) (snd $ unLoc $1) $2 $3
-                           Nothing (reverse (snd $ unLoc $4))
-                                   (fmap reverse $5))
+        | data_or_newtype opt_unlifted capi_ctype tycl_hdr constrs maybe_derivings
+                {% amms (mkTyData (comb4 $1 $4 $5 $6) (snd $ unLoc $1) (snd $2) $3 $4
+                           Nothing (reverse (snd $ unLoc $5))
+                                   (fmap reverse $6))
                                    -- We need the location on tycl_hdr in case
                                    -- constrs and deriving are both empty
-                        ((fst $ unLoc $1):(fst $ unLoc $4)) }
+                        ((fst $ unLoc $1):(fst $2)++(fst $ unLoc $5)) }
 
           -- ordinary GADT declaration
-        | data_or_newtype capi_ctype tycl_hdr opt_kind_sig
+        | data_or_newtype opt_unlifted capi_ctype tycl_hdr opt_kind_sig
                  gadt_constrlist
                  maybe_derivings
-            {% amms (mkTyData (comb4 $1 $3 $5 $6) (snd $ unLoc $1) $2 $3
-                            (snd $ unLoc $4) (snd $ unLoc $5)
-                            (fmap reverse $6) )
+            {% amms (mkTyData (comb4 $1 $4 $5 $6) (snd $ unLoc $1) (snd $2) $3 $4
+                            (snd $ unLoc $5) (snd $ unLoc $6)
+                            (fmap reverse $7) )
                                    -- We need the location on tycl_hdr in case
                                    -- constrs and deriving are both empty
-                    ((fst $ unLoc $1):(fst $ unLoc $4)++(fst $ unLoc $5)) }
+                    ((fst $ unLoc $1):(fst $2)++(fst $ unLoc $5)++(fst $ unLoc $6)) }
 
           -- data/newtype family
         | 'data' 'family' type opt_datafam_kind_sig
@@ -1280,22 +1281,22 @@ inst_decl :: { LInstDecl GhcPs }
                     (mj AnnType $1:mj AnnInstance $2:(fst $ unLoc $3)) }
 
           -- data/newtype instance declaration
-        | data_or_newtype 'instance' capi_ctype datafam_inst_hdr constrs
+        | data_or_newtype 'instance' opt_unlifted capi_ctype datafam_inst_hdr constrs
                           maybe_derivings
-            {% amms (mkDataFamInst (comb4 $1 $4 $5 $6) (snd $ unLoc $1) $3 (snd $ unLoc $4)
-                                      Nothing (reverse (snd  $ unLoc $5))
-                                              (fmap reverse $6))
-                    ((fst $ unLoc $1):mj AnnInstance $2:(fst $ unLoc $4)++(fst $ unLoc $5)) }
+            {% amms (mkDataFamInst (comb4 $1 $5 $6 $7) (snd $ unLoc $1) (snd $3) $4 (snd $ unLoc $5)
+                                      Nothing (reverse (snd  $ unLoc $6))
+                                              (fmap reverse $7))
+                    ((fst $ unLoc $1):mj AnnInstance $2:(fst $3)++(fst $ unLoc $5)++(fst $ unLoc $6)) }
 
           -- GADT instance declaration
-        | data_or_newtype 'instance' capi_ctype datafam_inst_hdr opt_kind_sig
+        | data_or_newtype 'instance' opt_unlifted capi_ctype datafam_inst_hdr opt_kind_sig
                  gadt_constrlist
                  maybe_derivings
-            {% amms (mkDataFamInst (comb4 $1 $4 $6 $7) (snd $ unLoc $1) $3 (snd $ unLoc $4)
-                                   (snd $ unLoc $5) (snd $ unLoc $6)
-                                   (fmap reverse $7))
+            {% amms (mkDataFamInst (comb4 $1 $5 $7 $8) (snd $ unLoc $1) (snd $3) $4 (snd $ unLoc $5)
+                                   (snd $ unLoc $6) (snd $ unLoc $7)
+                                   (fmap reverse $8))
                     ((fst $ unLoc $1):mj AnnInstance $2
-                       :(fst $ unLoc $4)++(fst $ unLoc $5)++(fst $ unLoc $6)) }
+                       :(fst $3)++(fst $ unLoc $5)++(fst $ unLoc $6)++(fst $ unLoc $7)) }
 
 overlap_pragma :: { Maybe (Located OverlapMode) }
   : '{-# OVERLAPPABLE'    '#-}' {% ajs (sLL $1 $> (Overlappable (getOVERLAPPABLE_PRAGs $1)))
@@ -1439,6 +1440,10 @@ opt_instance :: { [AddAnn] }
               : {- empty -} { [] }
               | 'instance'  { [mj AnnInstance $1] }
 
+opt_unlifted :: { ([AddAnn], Maybe Levity) }
+              : {- empty -} { ([], Nothing) }
+              | 'unlifted'  { ([mj AnnUnlifted $1], Just Unlifted) }
+
 -- Associated type instances
 --
 at_decl_inst :: { LInstDecl GhcPs }
@@ -1451,20 +1456,20 @@ at_decl_inst :: { LInstDecl GhcPs }
                         (mj AnnType $1:$2++(fst $ unLoc $3)) }
 
         -- data/newtype instance declaration, with optional 'instance' keyword
-        | data_or_newtype opt_instance capi_ctype datafam_inst_hdr constrs maybe_derivings
-               {% amms (mkDataFamInst (comb4 $1 $4 $5 $6) (snd $ unLoc $1) $3 (snd $ unLoc $4)
-                                    Nothing (reverse (snd $ unLoc $5))
-                                            (fmap reverse $6))
-                       ((fst $ unLoc $1):$2++(fst $ unLoc $4)++(fst $ unLoc $5)) }
+        | data_or_newtype opt_instance opt_unlifted capi_ctype datafam_inst_hdr constrs maybe_derivings
+               {% amms (mkDataFamInst (comb4 $1 $5 $6 $7) (snd $ unLoc $1) (snd $3) $4 (snd $ unLoc $5)
+                                    Nothing (reverse (snd $ unLoc $6))
+                                            (fmap reverse $7))
+                       ((fst $ unLoc $1):$2++(fst $3)++(fst $ unLoc $5)++(fst $ unLoc $6)) }
 
         -- GADT instance declaration, with optional 'instance' keyword
-        | data_or_newtype opt_instance capi_ctype datafam_inst_hdr opt_kind_sig
+        | data_or_newtype opt_unlifted opt_unlifted opt_instance capi_ctype datafam_inst_hdr opt_kind_sig
                  gadt_constrlist
                  maybe_derivings
-                {% amms (mkDataFamInst (comb4 $1 $4 $6 $7) (snd $ unLoc $1) $3
-                                (snd $ unLoc $4) (snd $ unLoc $5) (snd $ unLoc $6)
-                                (fmap reverse $7))
-                        ((fst $ unLoc $1):$2++(fst $ unLoc $4)++(fst $ unLoc $5)++(fst $ unLoc $6)) }
+                {% amms (mkDataFamInst (comb4 $1 $5 $7 $8) (snd $ unLoc $1) (snd $3) $4
+                                (snd $ unLoc $5) (snd $ unLoc $6) (snd $ unLoc $7)
+                                (fmap reverse $8))
+                        ((fst $ unLoc $1):$2++(fst $3)++(fst $ unLoc $5)++(fst $ unLoc $6)++(fst $ unLoc $7)) }
 
 data_or_newtype :: { Located (AddAnn, NewOrData) }
         : 'data'        { sL1 $1 (mj AnnData    $1,DataType) }
@@ -3706,6 +3711,7 @@ special_id
         | 'stock'               { sL1 $1 (fsLit "stock") }
         | 'anyclass'            { sL1 $1 (fsLit "anyclass") }
         | 'via'                 { sL1 $1 (fsLit "via") }
+        | 'unlifted'            { sL1 $1 (fsLit "unlifted") }
         | 'unit'                { sL1 $1 (fsLit "unit") }
         | 'dependency'          { sL1 $1 (fsLit "dependency") }
         | 'signature'           { sL1 $1 (fsLit "signature") }
@@ -3885,7 +3891,13 @@ comb3 a b c = a `seq` b `seq` c `seq`
 comb4 :: Located a -> Located b -> Located c -> Located d -> SrcSpan
 comb4 a b c d = a `seq` b `seq` c `seq` d `seq`
     (combineSrcSpans (getLoc a) $ combineSrcSpans (getLoc b) $
-                combineSrcSpans (getLoc c) (getLoc d))
+     combineSrcSpans (getLoc c) (getLoc d))
+
+comb5 :: (HasSrcSpan a , HasSrcSpan b , HasSrcSpan c , HasSrcSpan d , HasSrcSpan e) =>
+         a -> b -> c -> d -> e -> SrcSpan
+comb5 a b c d e = a `seq` b `seq` c `seq` d `seq` e `seq`
+    (combineSrcSpans (getLoc a) $ combineSrcSpans (getLoc b) $
+     combineSrcSpans (getLoc c) $ combineSrcSpans (getLoc d) (getLoc e))
 
 comb5 :: Located a -> Located b -> Located c -> Located d -> Located e -> SrcSpan
 comb5 a b c d e = a `seq` b `seq` c `seq` d `seq` e `seq`
@@ -3938,7 +3950,7 @@ we have to calculate the span using more of the tokens from the lhs, eg.
 
         | 'newtype' tycl_hdr '=' newconstr deriving
                 { L (comb3 $1 $4 $5)
-                    (mkTyData NewType (unLoc $2) $4 (unLoc $5)) }
+                    (mkTyData NewType Lifted (unLoc $2) $4 (unLoc $5)) }
 
 We provide comb3 and comb4 functions which are useful in such cases.
 

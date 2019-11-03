@@ -98,7 +98,7 @@ module GHC.Builtin.Types (
 
         -- * Kinds
         typeSymbolKindCon, typeSymbolKind,
-        isLiftedTypeKindTyConName, liftedTypeKind,
+        isLiftedTypeKindTyConName, liftedTypeKind, unliftedTypeKind,
         typeToTypeKind, constraintKind,
         liftedRepTyCon,
         liftedTypeKindTyCon, constraintKindTyCon,  constraintKindTyConName,
@@ -113,7 +113,7 @@ module GHC.Builtin.Types (
         runtimeRepTyCon, levityTyCon, vecCountTyCon, vecElemTyCon,
 
         boxedRepDataConTyCon,
-        runtimeRepTy, liftedRepTy, unliftedRepTy,
+        runtimeRepTy, liftedRepTy, unliftedRepTy, unliftedRepTy,
 
         vecRepDataConTyCon, tupleRepDataConTyCon, sumRepDataConTyCon,
 
@@ -740,8 +740,9 @@ constraintKindTyCon :: TyCon
 constraintKindTyCon = pcTyCon constraintKindTyConName Nothing [] []
 
 -- See Note [Prefer Type over TYPE 'LiftedRep] in GHC.Core.TyCo.Rep.
-liftedTypeKind, typeToTypeKind, constraintKind :: Kind
+liftedTypeKind, unliftedTypeKind, typeToTypeKind, constraintKind :: Kind
 liftedTypeKind   = TyCoRep.TyConApp liftedTypeKindTyCon []
+unliftedTypeKind = TyCoRep.TyConApp unliftedTypeKindTyCon []
 typeToTypeKind   = liftedTypeKind `mkVisFunTyMany` liftedTypeKind
 constraintKind   = mkTyConApp constraintKindTyCon []
 
@@ -1475,6 +1476,7 @@ runtimeRepTy = mkTyConTy runtimeRepTyCon
 -- and Note [Prefer Type over TYPE 'LiftedRep] in GHC.Core.TyCo.Rep.
 -- type Type = TYPE ('BoxedRep 'Lifted)
 -- type LiftedRep = 'BoxedRep 'Lifted
+-- type UnliftedRep = 'BoxedRep 'Unlifted
 liftedTypeKindTyCon :: TyCon
 liftedTypeKindTyCon   = buildSynTyCon liftedTypeKindTyConName
                                        [] liftedTypeKind [] rhs
@@ -1483,6 +1485,15 @@ liftedTypeKindTyCon   = buildSynTyCon liftedTypeKindTyConName
 liftedRepTyCon :: TyCon
 liftedRepTyCon = buildSynTyCon
   liftedRepTyConName [] runtimeRepTy [] liftedRepTy
+
+unliftedTypeKindTyCon :: TyCon
+unliftedTypeKindTyCon = buildSynTyCon unliftedTypeKindTyConName
+                                       [] unliftedTypeKind [] rhs
+  where rhs = TyCoRep.TyConApp tYPETyCon [mkTyConApp unliftedRepTyCon []]
+
+unliftedRepTyCon :: TyCon
+unliftedRepTyCon = buildSynTyCon
+  unliftedRepTyConName [] runtimeRepTy [] unliftedRepTy
 
 runtimeRepTyCon :: TyCon
 runtimeRepTyCon = pcTyCon runtimeRepTyConName Nothing []
@@ -1660,6 +1671,10 @@ liftedRepTy = mkTyConApp boxedRepDataConTyCon [liftedDataConTy]
 -- The type ('BoxedRep 'UnliftedRep)
 unliftedRepTy :: Type
 unliftedRepTy = mkTyConApp boxedRepDataConTyCon [unliftedDataConTy]
+
+-- The type ('UnliftedRep)
+unliftedRepTy :: Type
+unliftedRepTy = unliftedRepDataConTy
 
 {- *********************************************************************
 *                                                                      *
