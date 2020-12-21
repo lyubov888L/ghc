@@ -50,7 +50,7 @@ Language
 * Previously, ``-XUndecidableInstances`` accidentally implied ``-XFlexibleContexts``.
   This is now fixed, but it means that some programs will newly require
   ``-XFlexibleContexts``.
-        
+
 Compiler
 ~~~~~~~~
 
@@ -96,9 +96,12 @@ Runtime system
   Moreover, we now correctly account for the size of the array, meaning that
   space lost to fragmentation is no longer counted as live data.
 
-
 - The :rts-flag:`-h` flag has been deprecated, use either :rts-flag:`-hc` or
   :rts-flag:`-hT` explicitly, as appropiate.
+
+- The ``-xt`` RTS flag has been removed. Now STACK and TSO closures are always
+  included in heap profiles. Tooling can choose to filter out these closure types
+  if necessary.
 
 ``ghc-prim`` library
 ~~~~~~~~~~~~~~~~~~~~
