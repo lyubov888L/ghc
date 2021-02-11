@@ -635,10 +635,6 @@ makeMiniFixityEnv decls = foldlM add_one_sig emptyFsEnv decls
      foldlM add_one env [ (locA loc,locA name_loc,name,fixity)
                         | L name_loc name <- names ]
 
-   add_one :: FastStringEnv (Located e)
-                      -> (SrcSpan, SrcSpan, RdrName, e)
-                      -> IOEnv
-                           (Env TcGblEnv TcLclEnv) (FastStringEnv (Located e)) -- AZ temp
    add_one env (loc, name_loc, name,fixity) = do
      { -- this fixity decl is a duplicate iff
        -- the ReaderName's OccName's FastString is already in the env
@@ -743,7 +739,6 @@ rnPatSynBind sig_fn bind@(PSB { psb_id = L l name
       }
   where
     -- See Note [Renaming pattern synonym variables]
-    lookupPatSynBndr :: LocatedN RdrName -> TcM (LocatedN Name) -- AZ
     lookupPatSynBndr = wrapLocMA lookupLocalOccRn
 
     patternSynonymErr :: SDoc
@@ -1195,6 +1190,7 @@ rnMatch :: AnnoBody body
         -> RnM (LMatch GhcRn (LocatedA (body GhcRn)), FreeVars)
 rnMatch ctxt rnBody = wrapLocFstMA (rnMatch' ctxt rnBody)
 
+-- Note that there are no local fixity decls for matches
 rnMatch' :: (AnnoBody body)
          => HsMatchContext GhcRn
          -> (LocatedA (body GhcPs) -> RnM (LocatedA (body GhcRn), FreeVars))

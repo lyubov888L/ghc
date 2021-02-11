@@ -1350,10 +1350,6 @@ lookupChildren all_kids rdr_items
     oks   = [ ok      | Succeeded ok   <- mb_xs ]
     oks :: [Either (LocatedA Name) [Located FieldLabel]]
 
-    doOne :: LocatedA (IEWrappedName RdrName)
-                      -> MaybeErr
-                           (LocatedA (IEWrappedName RdrName))
-                           (Either (LocatedA Name) [Located FieldLabel]) -- AZ temp
     doOne item@(L l r)
        = case (lookupFsEnv kid_env . occNameFS . rdrNameOcc . ieWrappedName) r of
            Just [NormalGreName n]                             -> Succeeded (Left (L l n))
@@ -1713,7 +1709,6 @@ decls, and simply trim their import lists.  NB that
 getMinimalImports :: [ImportDeclUsage] -> RnM [LImportDecl GhcRn]
 getMinimalImports = fmap combine . mapM mk_minimal
   where
-    mk_minimal :: ImportDeclUsage -> RnM (LImportDecl GhcRn) -- AZ temp
     mk_minimal (L l decl, used_gres, unused)
       | null unused
       , Just (False, _) <- ideclHiding decl

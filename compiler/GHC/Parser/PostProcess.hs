@@ -623,7 +623,6 @@ mkPatSynMatchGroup (L loc patsyn_name) (L ld decls) =
        ; when (null matches) (wrongNumberErr (locA loc))
        ; return $ mkMatchGroup FromSource (L ld matches) }
   where
-    fromDecl :: LHsDecl GhcPs -> P (LMatch GhcPs (LHsExpr GhcPs)) -- AZ
     fromDecl (L loc decl@(ValD _ (PatBind _
                                  -- AZ: where should these anns come from?
                          pat@(L _ (ConPat noAnn ln@(L _ name) details))
@@ -706,11 +705,6 @@ mkGadtDecl loc names ty annsIn = do
 
       an = case outer_bndrs of
         _                -> ApiAnn (spanAsAnchor loc) (annsIn ++ annsa) (cs Semi.<> csa)
-        -- Was Maybe (ApiAnnForAllTy, STUFF)
-        -- Nothing                -> ApiAnn (realSrcSpan loc) (annsIn ++ annsa) (cs ++ csa)
-        -- Just (ApiAnnNotUsed,_) -> ApiAnn (realSrcSpan loc) (annsIn ++ annsa) (cs ++ csa)
-        -- Just (ApiAnn _ (af,ad) csf,_) ->
-        --   ApiAnn (realSrcSpan loc) (af:ad:annsIn ++ annsa) (cs ++ csa ++ csf)
 
   pure $ L l ConDeclGADT
                      { con_g_ext  = an
@@ -794,6 +788,7 @@ data_con_ty_con dc
 
   | otherwise  -- See Note [setRdrNameSpace for wired-in names]
   = Unqual (setOccNameSpace tcClsName (getOccName dc))
+
 
 
 {- Note [setRdrNameSpace for wired-in names]
@@ -921,22 +916,9 @@ checkTyClHdr :: Bool               -- True  <=> class header
 checkTyClHdr is_cls ty
   = goL ty [] [] Prefix
   where
-    goL :: LHsType GhcPs
-       -> [HsArg (LHsType GhcPs) (LHsKind GhcPs)]
-       -> [AddApiAnn]
-       -> LexicalFixity
-       -> P (LocatedN RdrName,
-             [HsArg (LHsType GhcPs) (LHsKind GhcPs)], LexicalFixity, [AddApiAnn]) -- AZ temp
     goL (L l ty) acc ann fix = go (locA l) ty acc ann fix
 
     -- workaround to define '*' despite StarIsType
-    go :: SrcSpan
-       -> HsType GhcPs
-       -> [HsArg (LHsType GhcPs) (LHsKind GhcPs)]
-       -> [AddApiAnn]
-       -> LexicalFixity
-       -> P (LocatedN RdrName,
-             [HsArg (LHsType GhcPs) (LHsKind GhcPs)], LexicalFixity, [AddApiAnn]) -- AZ temp
     go _ (HsParTy an (L l (HsStarTy _ isUni))) acc ann' fix
       = do { addWarning Opt_WarnStarBinder (PsWarnStarBinder (locA l))
            ; let name = mkOccName tcClsName (starSym isUni)
@@ -1176,9 +1158,6 @@ patFail loc e = addFatalError $ PsError (PsErrParseErrorInPat e) [] loc
 patIsRec :: RdrName -> Bool
 patIsRec e = e == mkUnqual varName (fsLit "rec")
 
--- opIsAt :: RdrName -> Bool
--- opIsAt e = e == mkUnqual varName (fsLit "@")
-
 ---------------------------------------------------------------------------
 -- Check Equation Syntax
 
@@ -1297,12 +1276,6 @@ isFunLhs :: LocatedA (PatBuilder GhcPs)
 -- Just (fun, is_infix, arg_pats) if e is a function LHS
 isFunLhs e = go e [] []
  where
-   go :: LocatedA (PatBuilder p)
-      -> [LocatedA (PatBuilder p)]
-      -> [AddApiAnn]
-      -> P (Maybe
-              (LocatedN RdrName, LexicalFixity,
-               [LocatedA (PatBuilder p)], [AddApiAnn])) -- AZ temp
    go (L _ (PatBuilderVar (L loc f))) es ann
        | not (isRdrDataCon f)        = return (Just (L loc f, Prefix, es, ann))
    go (L _ (PatBuilderApp f e)) es       ann = go f (e:es) ann
@@ -1798,8 +1771,6 @@ instance DisambECP (PatBuilder GhcPs) where
     return $ L (noAnnSrcSpan l) (PatBuilderPat pb)
   mkSumOrTuplePV = mkSumOrTuplePat
   rejectPragmaPV _ = return ()
-
-
 
 checkUnboxedStringLitPat :: Located (HsLit GhcPs) -> PV ()
 checkUnboxedStringLitPat (L loc lit) =
@@ -2606,8 +2577,6 @@ mkModuleImpExp anns (L l specname) subs = do
     ieNameFromSpec (ImpExpQcType r ln) = IEType r ln
     ieNameFromSpec (ImpExpQcWildcard)  = panic "ieName got wildcard"
 
-    wrapped :: ([GenLocated l ImpExpQcSpec]
-                  -> [GenLocated l (IEWrappedName RdrName)]) -- AZ
     wrapped = map (mapLoc ieNameFromSpec)
 
 mkTypeImpExp :: LocatedN RdrName   -- TcCls or Var name space

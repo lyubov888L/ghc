@@ -152,9 +152,7 @@ tcClassSigs clas sigs def_methods
        ; traceTc "tcClassSigs 2" (ppr clas)
        ; return op_info }
   where
-    vanilla_sigs :: [Located ([LocatedN Name], LHsSigType GhcRn)] -- AZ temp
     vanilla_sigs = [L (locA loc) (nm,ty) | L loc (ClassOpSig _ False nm ty) <- sigs]
-    gen_sigs :: [Located ([LocatedN Name], LHsSigType GhcRn)] -- AZ temp
     gen_sigs     = [L (locA loc) (nm,ty) | L loc (ClassOpSig _ True  nm ty) <- sigs]
     dm_bind_names :: [Name] -- These ones have a value binding in the class decl
     dm_bind_names = [op | L _ (FunBind {fun_id = L _ op}) <- bagToList def_methods]
@@ -173,8 +171,6 @@ tcClassSigs clas sigs def_methods
                   | nm `elem` dm_bind_names                 = Just VanillaDM
                   | otherwise                               = Nothing
 
-    tc_gen_sig :: ([LocatedN Name], LHsSigType GhcRn)
-                      -> IOEnv (Env TcGblEnv TcLclEnv) [(Name, (SrcSpan, Type))] -- AZ temp
     tc_gen_sig (op_names, gen_hs_ty)
       = do { gen_op_ty <- tcClassSigType op_names gen_hs_ty
            ; return [ (op_name, (locA loc, gen_op_ty))

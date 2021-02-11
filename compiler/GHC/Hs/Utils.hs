@@ -123,7 +123,6 @@ import GHC.Hs.Type
 import GHC.Hs.Lit
 import Language.Haskell.Syntax.Extension
 import GHC.Hs.Extension
-import GHC.Parser.Annotation
 
 import GHC.Tc.Types.Evidence
 import GHC.Core.TyCo.Rep
@@ -145,16 +144,17 @@ import GHC.Types.SourceText
 import GHC.Data.FastString
 import GHC.Data.Bag
 import GHC.Settings.Constants
+import GHC.Parser.Annotation
 
 import GHC.Utils.Misc
 import GHC.Utils.Outputable
 import GHC.Utils.Panic
 
+import Data.Data (Data)
 import Data.Either
 import Data.Function
 import Data.List ( partition, deleteBy )
 import Data.Proxy
-import Data.Data (Data)
 
 {-
 ************************************************************************
@@ -215,11 +215,6 @@ mkMatchGroup origin matches = MG { mg_ext = noExtField
                                  , mg_alts = matches
                                  , mg_origin = origin }
 
--- mkLocatedList ::  [Located a] -> Located [Located a]
--- mkLocatedList [] = noLoc []
--- mkLocatedList ms = L (combineLocs (head ms) (last ms)) ms
-
--- mkLocatedListA ::  [LocatedA a] -> LocatedL [LocatedA a]
 mkLocatedList :: Semigroup a => [GenLocated (SrcSpanAnn' a) e2] -> LocatedAn an [GenLocated (SrcSpanAnn' a) e2]
 mkLocatedList [] = noLocA []
 mkLocatedList ms = L (noAnnSrcSpan $ locA $ combineLocsA (head ms) (last ms)) ms
@@ -1110,8 +1105,6 @@ collect_bind _ _ (PatSynBind _ (XPatSynBind _)) acc = acc
 collect_bind _ _ (XHsBindsLR _) acc = acc
 
 collectMethodBinders :: forall idL idR. UnXRec idL => LHsBindsLR idL idR -> [LIdP idL]
--- collectMethodBinders :: LHsBindsLR idL idR -> [LocatedN (IdP idL)]
-                       -- AZ: old one
 -- ^ Used exclusively for the bindings of an instance decl which are all
 -- 'FunBinds'
 collectMethodBinders binds = foldr (get . unXRec @idL) [] binds
@@ -1251,8 +1244,6 @@ add_ev_bndr (EvBind { eb_lhs = b }) bs | isId b    = b:bs
 -- it can reuse the code in GHC for collecting binders.
 class UnXRec p => CollectPass p where
   collectXXPat :: Proxy p -> CollectFlag p -> XXPat p -> [IdP p] -> [IdP p]
--- class (XRec p Pat ~ LocatedA (Pat p)) => CollectPass p where
-                       -- AZ: old one
 
 instance IsPass p => CollectPass (GhcPass p) where
   collectXXPat _ flag ext =
@@ -1385,19 +1376,12 @@ hsLTyClDeclBinders (L loc (ClassDecl
     , [])
 hsLTyClDeclBinders (L loc (DataDecl    { tcdLName = (L _ name)
                                        , tcdDataDefn = defn }))
-  = (\ (xs, ys) -> (L loc name : xs, ys))
-                                                        $ hsDataDefnBinders defn
+  = (\ (xs, ys) -> (L loc name : xs, ys)) $ hsDataDefnBinders defn
 
 
 -------------------
--- hsForeignDeclsBinders :: forall pass. (UnXRec pass, MapXRec pass) => [LForeignDecl pass] -> [LIdP pass]
 hsForeignDeclsBinders :: forall p a. (UnXRec (GhcPass p), IsSrcSpanAnn p a)
                       => [LForeignDecl (GhcPass p)] -> [LIdP (GhcPass p)]
--- hsForeignDeclsBinders :: [LForeignDecl pass] -> [LocatedN (IdP pass)]
-                       -- AZ: old one
--- hsForeignDeclsBinders :: forall p a. (UnXRec (GhcPass p), IsSrcSpanAnn p a)
---                       => [LForeignDecl (GhcPass p)]
---                       -> [XRec (GhcPass p) (IdP (GhcPass p))]
 -- ^ See Note [SrcSpan for binders]
 hsForeignDeclsBinders foreign_decls
   = [ L (noAnnSrcSpan (locA decl_loc)) n

@@ -130,15 +130,11 @@ setL loc = CvtM (\_ _ -> Right (loc, ()))
 returnL :: a -> CvtM (Located a)
 returnL x = CvtM (\_ loc -> Right (loc, L loc x))
 
--- returnLA :: a -> CvtM (LocatedA a)
 returnLA :: e -> CvtM (GenLocated (SrcSpanAnn' (ApiAnn' ann)) e)
 returnLA x = CvtM (\_ loc -> Right (loc, L (noAnnSrcSpan loc) x))
 
 returnJustLA :: a -> CvtM (Maybe (LocatedA a))
 returnJustLA = fmap Just . returnLA
-
--- wrapParL :: (Located a -> a) -> a -> CvtM a
--- wrapParL add_par x = CvtM (\_ loc -> Right (loc, add_par (L loc x)))
 
 wrapParLA :: (LocatedA a -> a) -> a -> CvtM a
 wrapParLA add_par x = CvtM (\_ loc -> Right (loc, add_par (L (noAnnSrcSpan loc) x)))
@@ -434,7 +430,6 @@ cvtDec (TH.PatSynD nm args dir pat)
            ; vars' <- mapM (vNameN . mkNameS . nameBase) sels
            ; return $ Hs.RecCon $ zipWith RecordPatSynField sels' vars' }
 
-    -- cvtDir :: LocatedN RdrName -> (PatSynDir -> CvtM (HsPatSynDir RdrName))
     cvtDir _ Unidir          = return Unidirectional
     cvtDir _ ImplBidir       = return ImplicitBidirectional
     cvtDir n (ExplBidir cls) =

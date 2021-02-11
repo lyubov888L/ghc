@@ -668,12 +668,6 @@ evVarsOfTermList (EvTypeable _ ev)  =
     EvTypeableTyLit e     -> evVarsOfTermList e
 evVarsOfTermList (EvFun{}) = []
 
--- instance ToHie (EvBindContext (LocatedA TcEvBinds)) where
---   toHie (EvBindContext sc sp (L span (EvBinds bs)))
---     = toHie (EvBindContext sc sp (L (locA span) (EvBinds bs)))
---   toHie (EvBindContext sc sp (L span (TcEvBinds bs)))
---     = toHie (EvBindContext sc sp (L (locA span) (TcEvBinds bs)))
-
 instance ToHie (EvBindContext (LocatedA TcEvBinds)) where
   toHie (EvBindContext sc sp (L span (EvBinds bs)))
     = concatMapM go $ bagToList bs
@@ -687,9 +681,6 @@ instance ToHie (EvBindContext (LocatedA TcEvBinds)) where
             , toHie $ map (C EvidenceVarUse . L span) $ evDeps
             ]
   toHie _ = pure []
-
--- instance ToHie (LocatedA HsWrapper) where
---   toHie (L l w) = toHie (L (locA l) w)
 
 instance ToHie (LocatedA HsWrapper) where
   toHie (L osp wrap)
@@ -811,6 +802,18 @@ class ( IsPass p
       , Data (FieldOcc (GhcPass p))
       , Data (HsTupArg (GhcPass p))
       , Data (IPBind (GhcPass p))
+      , Data (HsRecField'
+                      (AmbiguousFieldOcc (GhcPass p))
+                      (LocatedA (HsExpr (GhcPass p))))
+      , Data (HsRecField'
+                      (FieldOcc (GhcPass p))
+                      (LocatedA (Pat (GhcPass p))))
+      , Data (HsRecField'
+                      (FieldOcc (GhcPass p))
+                      (PScoped (LocatedA (Pat (GhcPass p)))))
+      , Data (HsRecField'
+                      (FieldOcc (GhcPass p))
+                      (LocatedA (HsExpr (GhcPass p))))
       , ToHie (Context (Located (IdGhcP p)))
       , ToHie (RFContext (Located (AmbiguousFieldOcc (GhcPass p))))
       , ToHie (RFContext (Located (FieldOcc (GhcPass p))))
@@ -1050,8 +1053,6 @@ instance HiePass p => ToHie (PScoped (LocatedA (Pat (GhcPass p)))) where
       contextify (RecCon r) = RecCon $ RC RecFieldMatch $ contextify_rec r
       contextify_rec (HsRecFields fds a) = HsRecFields (map go scoped_fds) a
         where
-          go :: RScoped (LocatedA (HsRecField' id a1))
-                      -> LocatedA (HsRecField' id (PScoped a1)) -- AZ
           go (RS fscope (L spn (HsRecField x lbl pat pun))) =
             L spn $ HsRecField x lbl (PS rsp scope fscope pat) pun
           scoped_fds = listScopes pscope fds
@@ -1230,7 +1231,6 @@ instance HiePass p => ToHie (LocatedA (HsExpr (GhcPass p))) where
 
 -- NOTE: no longer have the location
 instance HiePass p => ToHie (HsTupArg (GhcPass p)) where
-  -- toHie (L span arg) = concatM $ makeNodeA arg span : case arg of
   toHie arg = concatM $ case arg of
     Present _ expr ->
       [ toHie expr
@@ -1340,13 +1340,14 @@ instance HiePass p => ToHie (RScoped (NHsValBindsLR (GhcPass p))) where
     , toHie $ fmap (SC (SI BindSig Nothing)) sigs
     ]
 
-instance ( ToHie arg , HasLoc arg , Data arg
+instance ( ToHie arg , HasLoc arg , Data arg, Data (HsRecField' (FieldOcc (GhcPass p)) arg)
          , HiePass p ) => ToHie (RContext (HsRecFields (GhcPass p) arg)) where
   toHie (RC c (HsRecFields fields _)) = toHie $ map (RC c) fields
 
 instance ( ToHie (RFContext (Located label))
          , ToHie arg, HasLoc arg, Data arg
          , Data label
+         , Data (HsRecField' label arg)
          ) => ToHie (RContext (LocatedA (HsRecField' label arg))) where
   toHie (RC c (L span recfld)) = concatM $ makeNode recfld (locA span) : case recfld of
     HsRecField _ label expr _ ->
@@ -1735,7 +1736,6 @@ instance ToHie (TScoped (LocatedA (HsSigType GhcRn))) where
       , toHie body
       ]
 
--- Check this
 instance Data flag => ToHie (TVScoped (HsOuterTyVarBndrs flag GhcRn)) where
   toHie (TVS tsc sc bndrs) = case bndrs of
     HsOuterImplicit xs -> bindingsOnly $ map (C $ TyVarBind sc tsc) xs

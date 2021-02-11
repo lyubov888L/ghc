@@ -49,7 +49,7 @@ tcDefaults [L _ (DefaultDecl _ [])]
   = return (Just [])            -- Default declaration specifying no types
 
 tcDefaults [L locn (DefaultDecl _ mono_tys)]
-  = setSrcSpan (locA locn)              $
+  = setSrcSpanA locn                    $
     addErrCtxt defaultDeclCtxt          $
     do  { ovl_str   <- xoptM LangExt.OverloadedStrings
         ; ext_deflt <- xoptM LangExt.ExtendedDefaultRules
@@ -67,7 +67,7 @@ tcDefaults [L locn (DefaultDecl _ mono_tys)]
         ; return (Just tau_tys) }
 
 tcDefaults decls@(L locn (DefaultDecl _ _) : _)
-  = setSrcSpan (locA locn) $
+  = setSrcSpanA locn $
     failWithTc (dupDefaultDeclErr decls)
 
 

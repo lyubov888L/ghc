@@ -197,7 +197,6 @@ subordinates instMap decl = case decl of
         derivs  = [ (instName, [unLoc doc], M.empty)
                   | (l, doc) <- concatMap (extract_deriv_clause_tys .
                                            deriv_clause_tys . unLoc) $
-                                -- unLoc $ dd_derivs dd
                                 dd_derivs dd
                   , Just instName <- [lookupSrcSpan l instMap] ]
 

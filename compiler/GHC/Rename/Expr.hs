@@ -307,9 +307,6 @@ rnExpr (RecordCon { rcon_con = con_id
                 , fvs `plusFV` plusFVs fvss `addOneFV` con_name) }
   where
     mk_hs_var l n = HsVar noExtField (L (noAnnSrcSpan l) n)
-    rn_field :: GenLocated l (HsRecField' id (LHsExpr GhcPs))
-                      -> RnM
-                           (GenLocated l (HsRecField' id (LHsExpr GhcRn)), FreeVars) -- AZ
     rn_field (L l fld) = do { (arg', fvs) <- rnLExpr (hsRecFieldArg fld)
                             ; return (L l (fld { hsRecFieldArg = arg' }), fvs) }
 
@@ -1061,7 +1058,8 @@ type Segment stmts = (Defs,
 -- wrapper that does both the left- and right-hand sides
 rnRecStmtsAndThen :: AnnoBody body =>
                      HsStmtContext GhcRn
-                  -> (body GhcPs -> RnM (body GhcRn, FreeVars))
+                  -> (body GhcPs
+                  -> RnM (body GhcRn, FreeVars))
                   -> [LStmt GhcPs (LocatedA (body GhcPs))]
                          -- assumes that the FreeVars returned includes
                          -- the FreeVars of the Segments

@@ -913,9 +913,6 @@ lookupLocatedOccRn :: GenLocated (SrcSpanAnn' ann) RdrName
                    -> TcRn (GenLocated (SrcSpanAnn' ann) Name)
 lookupLocatedOccRn = wrapLocMA lookupOccRn
 
--- lookupLocatedOccRnN :: LocatedN RdrName -> RnM (LocatedN Name)
--- lookupLocatedOccRnN = wrapLocMA lookupOccRn
-
 lookupLocalOccRn_maybe :: RdrName -> RnM (Maybe Name)
 -- Just look in the local environment
 lookupLocalOccRn_maybe rdr_name

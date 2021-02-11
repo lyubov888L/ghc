@@ -313,8 +313,6 @@ instance (OutputableBndrId p) => Outputable (HsGroup (GhcPass p)) where
 type instance XSpliceDecl      (GhcPass _) = NoExtField
 type instance XXSpliceDecl     (GhcPass _) = NoExtCon
 
--- type instance Anno (HsSplice (GhcPass p)) = SrcSpanAnnA
-
 instance OutputableBndrId p
        => Outputable (SpliceDecl (GhcPass p)) where
    ppr (SpliceDecl _ (L _ e) f) = pprSpliceDecl e f
@@ -327,9 +325,7 @@ instance OutputableBndrId p
 ************************************************************************
 -}
 
-type instance XFamDecl      GhcPs = NoExtField
-type instance XFamDecl      GhcRn = NoExtField
-type instance XFamDecl      GhcTc = NoExtField
+type instance XFamDecl      (GhcPass _) = NoExtField
 
 type instance XSynDecl      GhcPs = ApiAnn
 type instance XSynDecl      GhcRn = NameSet -- FVs
@@ -438,7 +434,6 @@ instance OutputableBndrId p
       ppr instds
 
 pp_vanilla_decl_head :: (OutputableBndrId p)
-   -- => LocatedN (IdP (GhcPass p))
    => XRec (GhcPass p) (IdP (GhcPass p))
    -> LHsQTyVars (GhcPass p)
    -> LexicalFixity
@@ -510,7 +505,6 @@ type instance XXFamilyDecl    (GhcPass _) = NoExtCon
 
 ------------- Functions over FamilyDecls -----------
 
--- familyDeclLName :: FamilyDecl (GhcPass p) -> LocatedN (IdP (GhcPass p))
 familyDeclLName :: FamilyDecl (GhcPass p) -> XRec (GhcPass p) (IdP (GhcPass p))
 familyDeclLName (FamilyDecl { fdLName = n }) = n
 
@@ -581,9 +575,6 @@ type instance XXHsDataDefn    (GhcPass _) = NoExtCon
 
 type instance XCHsDerivingClause    (GhcPass _) = ApiAnn
 type instance XXHsDerivingClause    (GhcPass _) = NoExtCon
-
--- For deriv_clause_tys
--- type instance Anno [HsImplicitBndrs (GhcPass p) (LocatedA (HsType (GhcPass p)))] = SrcSpanAnnC
 
 instance OutputableBndrId p
        => Outputable (HsDerivingClause (GhcPass p)) where
@@ -665,7 +656,6 @@ pp_data_defn pp_hdr (HsDataDefn { dd_ND = new_or_data, dd_ctxt = context
     pp_sig = case mb_sig of
                Nothing   -> empty
                Just kind -> dcolon <+> ppr kind
-    -- pp_derivings :: [_] -> SDoc
     pp_derivings ds = vcat (map ppr ds)
 
 instance OutputableBndrId p

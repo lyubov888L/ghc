@@ -120,6 +120,7 @@ checkDupRdrNamesN rdr_names_w_loc
   = mapM_ (dupNamesErr getLocA) dups
   where
     (_, dups) = removeDups (\n1 n2 -> unLoc n1 `compare` unLoc n2) rdr_names_w_loc
+                -- See Note [Binders in Template Haskell] in "GHC.ThToHs"
 
 checkDupNames :: [Name] -> RnM ()
 -- Check for duplicated names in a binding group

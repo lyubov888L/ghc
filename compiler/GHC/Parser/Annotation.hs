@@ -4,8 +4,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module GHC.Parser.Annotation (
-  -- getAnnotation, getAndRemoveAnnotation,
-  -- getAnnotationComments,getAndRemoveAnnotationComments,
   ApiAnns(..),
   ApiAnnKey,
   AnnKeywordId(..),

@@ -265,7 +265,6 @@ tcExpr e@(HsOverLabel _ mb_fromLabel l) res_ty
   origin = OverLabelOrigin l
   lbl = mkStrLitTy l
 
-  applyFromLabel :: SrcSpanAnnA -> IdP GhcRn -> HsExpr GhcRn -- AZ Temp
   applyFromLabel loc fromLabel =
     HsAppType NoExtField
          (L loc (HsVar noExtField (L (la2na loc) fromLabel)))
@@ -1377,8 +1376,6 @@ disambiguateRecordBinds record_expr record_rho rbnds res_ty
       = do { i <- tcLookupId n
            ; let L loc af = hsRecFieldLbl upd
                  lbl      = rdrNameAmbiguousFieldOcc af
-           -- ; return $ L l upd { hsRecFieldLbl
-           --                = L loc (Unambiguous i (L (noAnnSrcSpan loc) lbl)) }
            ; return $ L l HsRecField
                { hsRecFieldAnn = hsRecFieldAnn upd
                , hsRecFieldLbl
@@ -1428,8 +1425,6 @@ tcRecordBinds con_like arg_tys (HsRecFields rbinds dd)
       = do { mb <- tcRecordField con_like flds_w_tys f rhs
            ; case mb of
                Nothing         -> return Nothing
-               -- Just (f', rhs') -> return (Just (L l (fld { hsRecFieldLbl = f'
-               --                                            , hsRecFieldArg = rhs' }))) }
                Just (f', rhs') -> return (Just (L l (HsRecField
                                                      { hsRecFieldAnn = hsRecFieldAnn fld
                                                      , hsRecFieldLbl = f'

@@ -668,8 +668,8 @@ substId :: SimplEnv -> InId -> SimplSR
 -- Returns DoneEx only on a non-Var expression
 substId (SimplEnv { seInScope = in_scope, seIdSubst = ids }) v
   = case lookupVarEnv ids v of  -- Note [Global Ids in the substitution]
-        Nothing               -> DoneId (refineFromInScope in_scope v)
-        Just (DoneId v)       -> DoneId (refineFromInScope in_scope v)
+        Nothing               -> DoneId (refineFromInScope (text "a") in_scope v)
+        Just (DoneId v)       -> DoneId (refineFromInScope (text "b") in_scope v)
         Just res              -> res    -- DoneEx non-var, or ContEx
 
         -- Get the most up-to-date thing from the in-scope set
@@ -678,11 +678,11 @@ substId (SimplEnv { seInScope = in_scope, seIdSubst = ids }) v
         --
         -- See also Note [In-scope set as a substitution] in GHC.Core.Opt.Simplify.
 
-refineFromInScope :: InScopeSet -> Var -> Var
-refineFromInScope in_scope v
+refineFromInScope :: SDoc -> InScopeSet -> Var -> Var
+refineFromInScope c in_scope v
   | isLocalId v = case lookupInScope in_scope v of
                   Just v' -> v'
-                  Nothing -> pprPanic "refineFromInScope" (ppr in_scope $$ ppr v)
+                  Nothing -> pprPanic "refineFromInScope" (c <+> ppr in_scope $$ ppr v)
                              -- c.f #19074 for a subtle place where this went wrong
   | otherwise = v
 
@@ -693,7 +693,7 @@ lookupRecBndr (SimplEnv { seInScope = in_scope, seIdSubst = ids }) v
   = case lookupVarEnv ids v of
         Just (DoneId v) -> v
         Just _ -> pprPanic "lookupRecBndr" (ppr v)
-        Nothing -> refineFromInScope in_scope v
+        Nothing -> refineFromInScope (text "c") in_scope v
 
 {-
 ************************************************************************

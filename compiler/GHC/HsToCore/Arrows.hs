@@ -567,9 +567,6 @@ dsCmd ids local_vars stack_ty res_ty
         -- Prefix each tuple with a distinct series of Left's and Right's,
         -- in a balanced way, keeping track of the types.
 
-        merge_branches :: ([LHsExpr GhcTc], Type, CoreExpr)
-                      -> ([LHsExpr GhcTc], Type, CoreExpr)
-                      -> ([LHsExpr GhcTc], Type, CoreExpr) -- AZ
         merge_branches (builds1, in_ty1, core_exp1)
                        (builds2, in_ty2, core_exp2)
           = (map (left_expr in_ty1 in_ty2) builds1 ++

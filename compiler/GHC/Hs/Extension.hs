@@ -95,10 +95,7 @@ saying that NoGhcTcPass is idempotent.
 
 -}
 
--- type instance XRec (GhcPass p) a = Located a
 type instance XRec (GhcPass p) a = GenLocated (Anno a) a
-
--- type family Anno a = b
 
 type instance Anno RdrName = SrcSpanAnnName
 type instance Anno Name    = SrcSpanAnnName
@@ -160,7 +157,6 @@ instance Typeable p => Data (GhcPass p) where
   gunfold _ _ _ = panic "instance Data GhcPass"
   toConstr  _   = panic "instance Data GhcPass"
   dataTypeOf _  = panic "instance Data GhcPass"
-
 
 data Pass = Parsed | Renamed | Typechecked
          deriving (Data)

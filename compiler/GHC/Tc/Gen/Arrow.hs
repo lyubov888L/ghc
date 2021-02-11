@@ -140,7 +140,7 @@ tcCmdTop env names (L loc (HsCmdTop _names cmd)) cmd_ty@(cmd_stk, res_ty)
 tcCmd  :: CmdEnv -> LHsCmd GhcRn -> CmdType -> TcM (LHsCmd GhcTc)
         -- The main recursive function
 tcCmd env (L loc cmd) res_ty
-  = setSrcSpan (locA loc) $ do
+  = setSrcSpanA loc $ do
         { cmd' <- tc_cmd env cmd res_ty
         ; return (L loc cmd') }
 
@@ -151,7 +151,7 @@ tc_cmd env (HsCmdPar x cmd) res_ty
 
 tc_cmd env (HsCmdLet x binds (L body_loc body)) res_ty
   = do  { (binds', body') <- tcLocalBinds binds         $
-                             setSrcSpan (locA body_loc) $
+                             setSrcSpanA body_loc       $
                              tc_cmd env body res_ty
         ; return (HsCmdLet x binds' (L body_loc body')) }
 

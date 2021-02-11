@@ -980,7 +980,6 @@ pprLHsContext (Just lctxt)
   | otherwise          = pprLHsContextAlways (Just lctxt)
 
 -- For use in a HsQualTy, which always gets printed if it exists.
--- pprLHsContextAlways :: (OutputableBndrId p, Anno (IdGhcP p) ~ SrcSpanAnnName)
 pprLHsContextAlways :: OutputableBndrId p
                     => Maybe (LHsContext (GhcPass p)) -> SDoc
 pprLHsContextAlways Nothing = parens empty <+> darrow
@@ -990,12 +989,10 @@ pprLHsContextAlways (Just (L _ ctxt))
       [L _ ty] -> ppr_mono_ty ty           <+> darrow
       _        -> parens (interpp'SP ctxt) <+> darrow
 
--- pprConDeclFields :: (OutputableBndrId p, Anno (IdGhcP p) ~ SrcSpanAnnName)
 pprConDeclFields :: OutputableBndrId p
                  => [LConDeclField (GhcPass p)] -> SDoc
 pprConDeclFields fields = braces (sep (punctuate comma (map ppr_fld fields)))
   where
-    -- ppr_fld :: GenLocated l (ConDeclField (GhcPass p)) -> SDoc
     ppr_fld (L _ (ConDeclField { cd_fld_names = ns, cd_fld_type = ty,
                                  cd_fld_doc = doc }))
         = ppr_names ns <+> dcolon <+> ppr ty <+> ppr_mbDoc doc
@@ -1018,19 +1015,14 @@ seems like the Right Thing anyway.)
 
 -- Printing works more-or-less as for Types
 
--- pprHsType :: (OutputableBndrId p, Anno (IdGhcP p) ~ SrcSpanAnnName)
-pprHsType :: (OutputableBndrId p)
-          => HsType (GhcPass p) -> SDoc
+pprHsType :: (OutputableBndrId p) => HsType (GhcPass p) -> SDoc
 pprHsType ty = ppr_mono_ty ty
 
--- ppr_mono_lty :: (OutputableBndrId p, Anno (IdGhcP p) ~ SrcSpanAnnName)
 ppr_mono_lty :: OutputableBndrId p
              => LHsType (GhcPass p) -> SDoc
 ppr_mono_lty ty = ppr_mono_ty (unLoc ty)
 
--- ppr_mono_ty :: (OutputableBndrId p, Anno (IdGhcP p) ~ SrcSpanAnnName)
-ppr_mono_ty :: (OutputableBndrId p)
-            => HsType (GhcPass p) -> SDoc
+ppr_mono_ty :: (OutputableBndrId p) => HsType (GhcPass p) -> SDoc
 ppr_mono_ty (HsForAllTy { hst_tele = tele, hst_body = ty })
   = sep [pprHsForAll tele Nothing, ppr_mono_lty ty]
 
@@ -1099,8 +1091,7 @@ ppr_mono_ty (HsDocTy _ ty doc)
 ppr_mono_ty (XHsType t) = ppr t
 
 --------------------------
--- ppr_fun_ty :: (OutputableBndrId p, Anno (IdGhcP p) ~ SrcSpanAnnName)
-ppr_fun_ty :: OutputableBndrId p
+ppr_fun_ty :: (OutputableBndrId p)
            => HsArrow (GhcPass p) -> LHsType (GhcPass p) -> LHsType (GhcPass p) -> SDoc
 ppr_fun_ty mult ty1 ty2
   = let p1 = ppr_mono_lty ty1

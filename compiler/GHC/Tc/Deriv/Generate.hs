@@ -1084,24 +1084,20 @@ gen_Read_binds get_fixity loc tycon _
             | isSym con_str = [symbol_pat con_str]
             | otherwise     = [read_punc "`"] ++ ident_h_pat con_str ++ [read_punc "`"]
 
-        prefix_stmts :: [LStmt GhcPs (LHsExpr GhcPs)] -- AZ
         prefix_stmts            -- T a b c
           = read_prefix_con ++ read_args
 
-        infix_stmts :: [LStmt GhcPs (LHsExpr GhcPs)] -- AZ
         infix_stmts             -- a %% b, or  a `T` b
           = [read_a1]
             ++ read_infix_con
             ++ [read_a2]
 
-        record_stmts :: [LStmt GhcPs (LHsExpr GhcPs)] -- AZ
         record_stmts            -- T { f1 = a, f2 = b }
           = read_prefix_con
             ++ [read_punc "{"]
             ++ concat (intersperse [read_punc ","] field_stmts)
             ++ [read_punc "}"]
 
-        field_stmts :: [[LStmt GhcPs (LHsExpr GhcPs)]] -- AZ
         field_stmts  = zipWithEqual "lbl_stmts" read_field labels as_needed
 
         con_arity    = dataConSourceArity data_con

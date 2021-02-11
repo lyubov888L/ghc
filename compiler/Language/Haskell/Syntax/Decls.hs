@@ -457,8 +457,6 @@ data TyClDecl pass
         -- For details on above see note [Api annotations] in GHC.Parser.Annotation
   | XTyClDecl !(XXTyClDecl pass)
 
--- type LHsFunDep pass = XRec pass (FunDep (LIdP pass))
--- AZ version following
 data FunDep pass
   = FunDep (XCFunDep pass)
            [(XRec pass (IdP pass))]
@@ -859,9 +857,6 @@ type LInjectivityAnn pass = XRec pass (InjectivityAnn pass)
 data InjectivityAnn pass
   = InjectivityAnn (XCInjectivityAnn pass)
                    (LIdP pass) [LIdP pass]
-  -- = InjectivityAnn (XCInjectivityAnn pass)
-  --                  (LocatedN (IdP pass)) [LocatedN (IdP pass)]
-                       -- AZ: old one
   -- ^ - 'GHC.Parser.Annotation.AnnKeywordId' :
   --             'GHC.Parser.Annotation.AnnRarrow', 'GHC.Parser.Annotation.AnnVbar'
 
@@ -931,8 +926,6 @@ data HsDataDefn pass   -- The payload of a data type defn
 
 -- | Haskell Deriving clause
 type HsDeriving pass = [LHsDerivingClause pass]
--- type HsDeriving pass = [LHsDerivingClause pass]
-                       -- AZ: old one
   -- ^ The optional @deriving@ clauses of a data declaration. "Clauses" is
   -- plural because one can specify multiple deriving clauses using the
   -- @-XDerivingStrategies@ language extension.
@@ -1786,9 +1779,6 @@ data AnnDecl pass = HsAnnotation
   | XAnnDecl !(XXAnnDecl pass)
 
 -- | Annotation Provenance
--- data AnnProvenance name = ValueAnnProvenance (LocatedN name)
---                         | TypeAnnProvenance (LocatedN name)
---                         | ModuleAnnProvenance
 data AnnProvenance pass = ValueAnnProvenance (LIdP pass)
                         | TypeAnnProvenance (LIdP pass)
                         | ModuleAnnProvenance

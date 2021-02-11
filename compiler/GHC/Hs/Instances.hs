@@ -333,11 +333,12 @@ deriving instance Data (GRHS     GhcTc (LocatedA (HsCmd GhcTc)))
 
 -- deriving instance (DataIdLR p p,Data body) => Data (StmtLR   p p body)
 deriving instance Data (StmtLR   GhcPs GhcPs (LocatedA (HsExpr GhcPs)))
-deriving instance Data (StmtLR   GhcPs GhcRn (LocatedA (HsExpr GhcRn)))
 deriving instance Data (StmtLR   GhcRn GhcRn (LocatedA (HsExpr GhcRn)))
+-- deriving instance Data (StmtLR   GhcRn GhcRn (LocatedA (HsExpr GhcRn)))
 deriving instance Data (StmtLR   GhcTc GhcTc (LocatedA (HsExpr GhcTc)))
+
 deriving instance Data (StmtLR   GhcPs GhcPs (LocatedA (HsCmd GhcPs)))
-deriving instance Data (StmtLR   GhcPs GhcRn (LocatedA (HsCmd GhcRn)))
+-- deriving instance Data (StmtLR   GhcPs GhcRn (LocatedA (HsCmd GhcRn)))
 deriving instance Data (StmtLR   GhcRn GhcRn (LocatedA (HsCmd GhcRn)))
 deriving instance Data (StmtLR   GhcTc GhcTc (LocatedA (HsCmd GhcTc)))
 
@@ -418,11 +419,29 @@ deriving instance Data ConPatTc
 
 deriving instance Data ListPatTc
 
-deriving instance (Data a, Data b) => Data (HsRecField' a b)
+-- deriving instance (Data a, Data b) => Data (HsRecField' a b)
+deriving instance Data (HsRecField' (AmbiguousFieldOcc GhcPs) (LocatedA (HsExpr GhcPs)))
+deriving instance Data (HsRecField' (AmbiguousFieldOcc GhcRn) (LocatedA (HsExpr GhcRn)))
+deriving instance Data (HsRecField' (AmbiguousFieldOcc GhcTc) (LocatedA (HsExpr GhcTc)))
 
-deriving instance (Data body) => Data (HsRecFields GhcPs body)
-deriving instance (Data body) => Data (HsRecFields GhcRn body)
-deriving instance (Data body) => Data (HsRecFields GhcTc body)
+deriving instance (Data body) => Data (HsRecField' (FieldOcc GhcPs) body)
+deriving instance (Data body) => Data (HsRecField' (FieldOcc GhcRn) body)
+deriving instance (Data body) => Data (HsRecField' (FieldOcc GhcTc) body)
+
+-- deriving instance Data (HsRecField' (FieldOcc GhcPs) (LocatedA (HsExpr GhcPs)))
+-- deriving instance Data (HsRecField' (FieldOcc GhcRn) (LocatedA (HsExpr GhcRn)))
+-- deriving instance Data (HsRecField' (FieldOcc GhcTc) (LocatedA (HsExpr GhcTc)))
+-- deriving instance Data (HsRecField' (FieldOcc GhcPs) (LocatedA (Pat GhcPs)))
+-- deriving instance Data (HsRecField' (FieldOcc GhcRn) (LocatedA (Pat GhcRn)))
+-- deriving instance Data (HsRecField' (FieldOcc GhcTc) (LocatedA (Pat GhcTc)))
+
+deriving instance Data (HsRecFields GhcPs (LocatedA (HsExpr GhcPs)))
+deriving instance Data (HsRecFields GhcRn (LocatedA (HsExpr GhcRn)))
+deriving instance Data (HsRecFields GhcTc (LocatedA (HsExpr GhcTc)))
+
+deriving instance Data (HsRecFields GhcPs (LocatedA (Pat GhcPs)))
+deriving instance Data (HsRecFields GhcRn (LocatedA (Pat GhcRn)))
+deriving instance Data (HsRecFields GhcTc (LocatedA (Pat GhcTc)))
 
 -- ---------------------------------------------------------------------
 -- Data derivations from GHC.Hs.Type ----------------------------------
@@ -477,7 +496,11 @@ deriving instance Data thing => Data (HsScaled GhcPs thing)
 deriving instance Data thing => Data (HsScaled GhcRn thing)
 deriving instance Data thing => Data (HsScaled GhcTc thing)
 
-deriving instance (Data a, Data b) => Data (HsArg a b)
+-- deriving instance (Data a, Data b) => Data (HsArg a b)
+deriving instance Data (HsArg (LocatedA (HsType GhcPs)) (LocatedA (HsType GhcPs)))
+deriving instance Data (HsArg (LocatedA (HsType GhcRn)) (LocatedA (HsType GhcRn)))
+deriving instance Data (HsArg (LocatedA (HsType GhcTc)) (LocatedA (HsType GhcTc)))
+
 -- deriving instance Data (HsArg (Located (HsType GhcPs)) (Located (HsKind GhcPs)))
 -- deriving instance Data (HsArg (Located (HsType GhcRn)) (Located (HsKind GhcRn)))
 -- deriving instance Data (HsArg (Located (HsType GhcTc)) (Located (HsKind GhcTc)))

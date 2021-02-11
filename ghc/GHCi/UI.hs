@@ -1705,7 +1705,6 @@ defineMacro overwrite s = do
       -- > ghciStepIO . definition :: String -> IO String
       let stringTy :: LHsType GhcPs
           stringTy = nlHsTyVar stringTyCon_RDR
-          ioM :: LHsType GhcPs -- AZ
           ioM = nlHsTyVar (getRdrName ioTyConName) `nlHsAppTy` stringTy
           body = nlHsVar compose_RDR `mkHsApp` (nlHsPar step)
                                      `mkHsApp` (nlHsPar expr)

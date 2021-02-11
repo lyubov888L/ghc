@@ -589,7 +589,6 @@ rnHsRecPatsAndThen mk (L _ con)
        ; check_unused_wildcard (implicit_binders flds' <$> dd)
        ; return (HsRecFields { rec_flds = flds', rec_dotdot = dd }) }
   where
-    mkVarPat :: SrcSpan -> IdP GhcPs -> Pat GhcPs -- AZ
     mkVarPat l n = VarPat noExtField (L (noAnnSrcSpan l) n)
     rn_field (L l fld, n') =
       do { arg' <- rnLPatAndThen (nested_mk dd mk n') (hsRecFieldArg fld)

@@ -29,9 +29,6 @@ data SumOrTuple b
   = Sum ConTag Arity (LocatedA b) [AnnAnchor] [AnnAnchor]
   -- ^ Last two are the locations of the '|' before and after the payload
   | Tuple [Either (ApiAnn' AnnAnchor) (LocatedA b)]
--- data SumOrTuple b
---   = Sum ConTag Arity (Located b)
---   | Tuple [Located (Maybe (Located b))]
 
 pprSumOrTuple :: Outputable b => Boxity -> SumOrTuple b -> SDoc
 pprSumOrTuple boxity = \case
@@ -50,20 +47,6 @@ pprSumOrTuple boxity = \case
       case boxity of
         Boxed -> (text "(", text ")")
         Unboxed -> (text "(#", text "#)")
--- pprSumOrTuple :: Outputable b => Boxity -> SumOrTuple b -> SDoc
--- pprSumOrTuple boxity = \case
---     Sum alt arity e ->
---       parOpen <+> ppr_bars (alt - 1) <+> ppr e <+> ppr_bars (arity - alt)
---               <+> parClose
---     Tuple xs ->
---       parOpen <> (fcat . punctuate comma $ map (maybe empty ppr . unLoc) xs)
---               <> parClose
---   where
---     ppr_bars n = hsep (replicate n (Outputable.char '|'))
---     (parOpen, parClose) =
---       case boxity of
---         Boxed -> (text "(", text ")")
---         Unboxed -> (text "(#", text "#)")
 
 
 -- | See Note [Ambiguous syntactic categories] and Note [PatBuilder]

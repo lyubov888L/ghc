@@ -71,13 +71,10 @@ import qualified Language.Haskell.TH as TH (Q)
 
 -- | Located Haskell Expression
 type LHsExpr p = XRec p (HsExpr p)
--- type LHsExpr p = LocatedA (HsExpr p)
-                       -- AZ: old one
   -- ^ May have 'GHC.Parser.Annotation.AnnKeywordId' : 'GHC.Parser.Annotation.AnnComma' when
   --   in a list
 
   -- For details on above see note [Api annotations] in GHC.Parser.Annotation
-
 
 -------------------------
 {- Note [NoSyntaxExpr]
@@ -336,8 +333,6 @@ data HsExpr p
                 -- because in this context we never use
                 -- the PatGuard or ParStmt variant
                 (XRec p [ExprLStmt p])   -- "do":one or more stmts
-                -- (LocatedL [ExprLStmt p]) -- "do":one or more stmts
-                       -- AZ: old one
 
   -- | Syntactic list: [a,b,c,...]
   --
@@ -993,11 +988,6 @@ patterns in each equation.
 data MatchGroup p body
   = MG { mg_ext     :: XMG p body -- Post-typechecker, types of args and result
        , mg_alts    :: XRec p [LMatch p body]  -- The alternatives
-       -- , mg_alts    :: LocatedL [LMatch p body]  -- The alternatives
-                       -- AZ: old one
-       --                -- TODO:AZ: need mg_alts be located? put the
-       --                -- info into XMG instead?  Need list offset
-       --                -- though, so maybe not.  And AnnSortKey
        , mg_origin  :: Origin }
      -- The type is the type of the entire group
      --      t1 -> ... -> tn -> tr
@@ -1012,7 +1002,6 @@ data MatchGroupTc
 
 -- | Located Match
 type LMatch id body = XRec id (Match id body)
--- type LMatch id body = LocatedA (Match id body)
 -- ^ May have 'GHC.Parser.Annotation.AnnKeywordId' : 'GHC.Parser.Annotation.AnnSemi' when in a
 --   list
 
@@ -1242,7 +1231,6 @@ data StmtLR idL idR body -- body should always be (LHs**** idR)
      { recS_ext :: XRecStmt idL idR body
      , recS_stmts :: XRec idR [LStmtLR idL idR body]
      -- Assume XRec is the same for idL and idR, pick one arbitrarily
-     -- , recS_stmts :: LocatedL [LStmtLR idL idR body]
 
         -- The next two fields are only valid after renaming
      , recS_later_ids :: [IdP idR]
@@ -1590,7 +1578,6 @@ data HsBracket p
   | DecBrG (XDecBrG p)  (HsGroup p)   -- [d| decls |]; result of renamer
   | TypBr  (XTypBr p)   (LHsType p)   -- [t| type  |]
   | VarBr  (XVarBr p)   Bool (LIdP p)
-  -- | VarBr  (XVarBr p)   Bool (LocatedN (IdP p))
                                 -- True: 'x, False: ''T
                                 -- (The Bool flag is used only in pprHsBracket)
   | TExpBr (XTExpBr p) (LHsExpr p)    -- [||  expr  ||]

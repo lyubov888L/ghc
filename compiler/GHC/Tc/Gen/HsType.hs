@@ -1450,10 +1450,6 @@ splitHsAppTys hs_ty
     is_app (HsParTy _ (L _ ty))    = is_app ty
     is_app _                       = False
 
-    go :: LHsType GhcRn
-       -> [HsArg (LHsType GhcRn) (LHsKind GhcRn)]
-       -> (LHsType GhcRn,
-           [HsArg (LHsType GhcRn) (LHsKind GhcRn)]) -- AZ temp
     go (L _  (HsAppTy _ f a))      as = go f (HsValArg a : as)
     go (L _  (HsAppKindTy l ty k)) as = go ty (HsTypeArg l k : as)
     go (L sp (HsParTy _ f))        as = go f (HsArgPar (locA sp) : as)

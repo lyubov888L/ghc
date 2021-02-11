@@ -47,8 +47,6 @@ One per \tr{import} declaration in a module.
 
 -- | Located Import Declaration
 type LImportDecl pass = XRec pass (ImportDecl pass)
--- type LImportDecl pass = LocatedA (ImportDecl pass)
-                       -- AZ: old one
         -- ^ When in a list this may have
         --
         --  - 'GHC.Parser.Annotation.AnnKeywordId' : 'GHC.Parser.Annotation.AnnSemi'
@@ -95,8 +93,6 @@ data ImportDecl pass
       ideclImplicit  :: Bool,          -- ^ True => implicit import (of Prelude)
       ideclAs        :: Maybe (XRec pass ModuleName),  -- ^ as Module
       ideclHiding    :: Maybe (Bool, XRec pass [LIE pass])
-      -- ideclHiding    :: Maybe (Bool, LocatedL [LIE pass])
-                       -- AZ: old one
                                        -- ^ (True => hiding, names)
     }
   | XImportDecl !(XXImportDecl pass)
@@ -191,12 +187,10 @@ instance (OutputableBndrId p
                           SourceText src -> text src <+> text "#-}"
         ppr_imp NotBoot = empty
 
-        -- pp_spec :: (Maybe (Bool, LocatedL [LIE (GhcPass p)])) -> SDoc
         pp_spec Nothing             = empty
         pp_spec (Just (False, (L _ ies))) = ppr_ies ies
         pp_spec (Just (True, (L _ ies))) = text "hiding" <+> ppr_ies ies
 
-        -- ppr_ies :: [LIE (GhcPass p)] -> SDoc
         ppr_ies []  = text "()"
         ppr_ies ies = char '(' <+> interpp'SP ies <+> char ')'
 
@@ -228,8 +222,6 @@ type LIEWrappedName name = LocatedA (IEWrappedName name)
 
 -- | Located Import or Export
 type LIE pass = XRec pass (IE pass)
--- type LIE pass = LocatedA (IE pass)
-                       -- AZ: old one
         -- ^ When in a list this may have
         --
         --  - 'GHC.Parser.Annotation.AnnKeywordId' : 'GHC.Parser.Annotation.AnnComma'

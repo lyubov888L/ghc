@@ -771,8 +771,6 @@ type instance XXCmd       GhcPs = NoExtCon
 type instance XXCmd       GhcRn = NoExtCon
 type instance XXCmd       GhcTc = HsWrap HsCmd
 
-                -- (XRec id [CmdLStmt id])
-                -- -- (LocatedL [CmdLStmt id])
 type instance Anno [LocatedA (StmtLR (GhcPass pl) (GhcPass pr) (LocatedA (HsCmd (GhcPass pr))))]
   = SrcSpanAnnL
 
@@ -818,7 +816,6 @@ ppr_lcmd :: (OutputableBndrId p) => LHsCmd (GhcPass p) -> SDoc
 ppr_lcmd c = ppr_cmd (unLoc c)
 
 ppr_cmd :: forall p. (OutputableBndrId p
-                 -- Anno (StmtLR (GhcPass p) (GhcPass p) body) ~ SrcSpanAnnA
                      ) => HsCmd (GhcPass p) -> SDoc
 ppr_cmd (HsCmdPar _ c) = parens (ppr_lcmd c)
 
@@ -960,17 +957,11 @@ pprMatches MG { mg_alts = matches }
       -- Don't print the type; it's only a place-holder before typechecking
 
 -- Exported to GHC.Hs.Binds, which can't see the defn of HsMatchContext
--- pprFunBind :: (OutputableBndrId idR, Outputable body)
---            => MatchGroup (GhcPass idR) body -> SDoc
 pprFunBind :: (OutputableBndrId idR)
            => MatchGroup (GhcPass idR) (LHsExpr (GhcPass idR)) -> SDoc
 pprFunBind matches = pprMatches matches
 
 -- Exported to GHC.Hs.Binds, which can't see the defn of HsMatchContext
--- pprPatBind :: forall bndr p body. (OutputableBndrId bndr,
---                                    OutputableBndrId p,
---                                    Outputable body)
---            => LPat (GhcPass bndr) -> GRHSs (GhcPass p) body -> SDoc
 pprPatBind :: forall bndr p . (OutputableBndrId bndr,
                                OutputableBndrId p)
            => LPat (GhcPass bndr) -> GRHSs (GhcPass p) (LHsExpr (GhcPass p)) -> SDoc
@@ -1273,8 +1264,6 @@ pprComp quals     -- Prints:  body | qual1, ..., qualn
 pprQuals :: (OutputableBndrId p, Outputable body,
                  Anno (StmtLR (GhcPass p) (GhcPass p) body) ~ SrcSpanAnnA)
          => [LStmt (GhcPass p) body] -> SDoc
--- pprQuals :: (OutputableBndrId p)
---          => [LStmt (GhcPass p) (LocatedA (HsExpr (GhcPass p)))] -> SDoc
 -- Show list comprehension qualifiers separated by commas
 pprQuals quals = interpp'SP quals
 

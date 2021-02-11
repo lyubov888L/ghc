@@ -1198,7 +1198,6 @@ bindLHsTyVarBndrs doc wuf mb_assoc tv_bndrs thing_inside
        ; checkDupRdrNamesN tv_names_w_loc
        ; go tv_bndrs thing_inside }
   where
-    tv_names_w_loc :: [LocatedN RdrName] --AZ
     tv_names_w_loc = map hsLTyVarLocName tv_bndrs
 
     go []     thing_inside = thing_inside []
@@ -1548,7 +1547,7 @@ checkPrec op (ConPat NoExtField op1 (InfixCon _ _)) right = do
                   (op1_dir == InfixR && op_dir == InfixR && right ||
                    op1_dir == InfixL && op_dir == InfixL && not right))
 
-        info  = (NormalOp op,              op_fix)
+        info  = (NormalOp op,          op_fix)
         info1 = (NormalOp (unLoc op1), op1_fix)
         (infol, infor) = if right then (info, info1) else (info1, info)
     unless inf_ok (precParseErr infol infor)

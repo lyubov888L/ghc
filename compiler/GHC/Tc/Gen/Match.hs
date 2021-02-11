@@ -175,7 +175,6 @@ tcGRHSsPat grhss res_ty
       -- desugar to incorrect code.
     tcGRHSs match_ctxt grhss res_ty
   where
-    match_ctxt :: TcMatchCtxt HsExpr -- AZ
     match_ctxt = MC { mc_what = PatBindRhs,
                       mc_body = tcBody }
 

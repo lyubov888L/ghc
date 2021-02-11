@@ -812,6 +812,7 @@ HYPHEN :: { [AddApiAnn] }
                    else do { addError $ PsError PsErrExpectedHyphen [] (getLoc $1)
                            ; return [] } }
 
+
 litpkgname :: { Located FastString }
         : litpkgname_segment { $1 }
         -- a bit of a hack, means p - b is parsed same as p-b, enough for now.
@@ -1111,9 +1112,6 @@ importdecl :: { LImportDecl GhcPs }
                                   , ideclHiding = unLoc $9 })
                   }
                 }
-                  -- ; let anns
-                  --        = (mj AnnImport $1 : fst (fst $2) ++ fst $3 ++ fmap (mj AnnQualified) (maybeToList $4)
-                  --                         ++ fst $5 ++ fmap (mj AnnQualified) (maybeToList $7) ++ fst $8)
 
 
 maybe_src :: { ((Maybe (AnnAnchor,AnnAnchor),SourceText),IsBootInterface) }
@@ -1422,13 +1420,7 @@ ty_fam_inst_eqn :: { LTyFamInstEqn GhcPs }
                     ; let loc = comb2A $1 $>
                     ; cs <- getCommentsFor loc
                     ; mkTyFamInstEqn loc (mkHsOuterExplicit (ApiAnn (glR $1) (mu AnnForall $1, mj AnnDot $3) cs) tvbs) $4 $6 [mj AnnEqual $5] }}
-                    -- ; (eqn,ann) <- mkTyFamInstEqn (mkHsOuterExplicit tvbs) $4 $6
-                    -- ; return (sLL $1 $>
-                    --            (mu AnnForall $1:mj AnnDot $3:mj AnnEqual $5:ann,eqn)) } }
-                    -- ; mkTyFamInstEqn (comb2A $1 $>) (Just tvb) $4 $6 (mu AnnForall $1:mj AnnDot $3:mj AnnEqual $5:[]) }}
         | type '=' ktype
-              -- {% do { (eqn,ann) <- mkTyFamInstEqn mkHsOuterImplicit $1 $3
-              --       ; return (sLL $1 $> (mj AnnEqual $2:ann, eqn))  } }
               {% mkTyFamInstEqn (comb2A (reLoc $1) $>) mkHsOuterImplicit $1 $3 (mj AnnEqual $2:[]) }
               -- Note the use of type for the head; this allows
               -- infix type constructors and type patterns
@@ -1680,8 +1672,6 @@ decl_cls  : at_decl_cls                 { $1 }
                                       quotes (ppr $2)
                           ; acsA (\cs -> sLL $1 (reLoc $>) $ SigD noExtField $ ClassOpSig (ApiAnn (glR $1) (AnnSig (mu AnnDcolon $3) [mj AnnDefault $1]) cs) True [v] $4) }}
 
--- TODO:AZ: get rid of [AddApiAnn] below. Except they will be used for
--- leading semicolons? Or decls with nothing but semicolons?
 decls_cls :: { Located ([AddApiAnn],OrdList (LHsDecl GhcPs)) }  -- Reversed
           : decls_cls ';' decl_cls      {% if isNilOL (snd $ unLoc $1)
                                              then return (sLLlA $1 $> ((mz AnnSemi $2) ++ (fst $ unLoc $1)
@@ -1766,8 +1756,6 @@ where_inst :: { Located ([AddApiAnn]
 
 -- Declarations in binding groups other than classes and instances
 --
--- TODO:AZ: get rid of [AddApiAnn] below. Except they will be used for
--- leading semicolons? Or decls with nothing but semicolons?
 decls   :: { Located ([TrailingAnn], OrdList (LHsDecl GhcPs)) }
         : decls ';' decl    {% if isNilOL (snd $ unLoc $1)
                                  then return (sLLlA $1 $> ((msemi $2) ++ (fst $ unLoc $1)
@@ -2471,7 +2459,6 @@ deriving :: { LHsDerivingClause GhcPs }
               {% let { full_loc = comb2 $1 $> }
                  in acs (\cs -> L full_loc $ HsDerivingClause (ApiAnn (glR $1) [mj AnnDeriving $1] cs) (Just $3) $2) }
 
-        -- : qtycon              { let { tc = sL1 $1 (HsTyVar noExtField NotPromoted $1) } in
 deriv_clause_types :: { LDerivClauseTys GhcPs }
         : qtycon              { let { tc = sL1 (reLocL $1) $ mkHsImplicitSigType $
                                            sL1 (reLocL $1) $ HsTyVar noAnn NotPromoted $1 } in
@@ -4107,10 +4094,6 @@ msemi l = if isZeroWidthSpan (gl l) then [] else [AddSemiAnn (AR $ rs $ gl l)]
 -- unicode variant of the annotation.
 mu :: AnnKeywordId -> Located Token -> AddApiAnn
 mu a lt@(L l t) = AddApiAnn (toUnicodeAnn a lt) (AR $ rs l)
-
--- mlu :: Located Token -> TrailingAnn
--- mlu lt@(L l t) = if isUnicode lt then AddLollyAnnU (rs l)
---                                  else AddLollyAnn  (rs l)
 
 mau :: Located Token -> TrailingAnn
 mau lt@(L l t) = if isUnicode lt then AddRarrowAnnU (AR $ rs l)

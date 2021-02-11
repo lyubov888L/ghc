@@ -624,9 +624,6 @@ instance HasHaddock (Located (HsDerivingClause GhcPs)) where
               Just (L l _) -> (registerLocHdkA l, pure ())
         register_strategy_before
         deriv_clause_tys' <- addHaddock deriv_clause_tys
-        -- deriv_clause_tys' <-
-        --   extendHdkA (getLocA deriv_clause_tys) $
-        --   traverse @LocatedC addHaddock deriv_clause_tys
         register_strategy_after
         pure HsDerivingClause
           { deriv_clause_ext,

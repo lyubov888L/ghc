@@ -281,7 +281,6 @@ rnSrcWarnDecls bndr_set decls'
 
    what = text "deprecation"
 
-   warn_rdr_dups :: [NonEmpty (LocatedN RdrName)] -- AZ Temp
    warn_rdr_dups = findDupRdrNames
                    $ concatMap (\(L _ (Warning _ ns _)) -> ns) decls
 
@@ -1292,7 +1291,7 @@ validRuleLhs foralls lhs
     check (HsApp _ e1 e2)                 = checkl e1 `mplus` checkl_e e2
     check (HsAppType _ e _)               = checkl e
     check (HsVar _ lv)
-      | (unLoc lv) `notElem` foralls  = Nothing
+      | (unLoc lv) `notElem` foralls      = Nothing
     check other                           = Just other  -- Failure
 
         -- Check an argument
